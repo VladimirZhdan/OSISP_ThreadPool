@@ -12,7 +12,7 @@ class FileLogger
 {
 public:
 	static void Log(string message);
-private:
+private:	
 	static HANDLE hMutex;
 	static string logFileName;
 };
