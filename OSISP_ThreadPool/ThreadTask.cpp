@@ -13,6 +13,10 @@ int ThreadTask::Run()
 	{
 		return task(params);
 	}
+	else
+	{
+		return -1;
+	}
 }
 
 

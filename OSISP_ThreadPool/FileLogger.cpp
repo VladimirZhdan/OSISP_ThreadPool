@@ -7,7 +7,9 @@ HANDLE FileLogger::hMutex = CreateMutex(NULL, FALSE, NULL);
 void FileLogger::Log(string message)
 {
 	time_t currTime = time(NULL);
-	string currTimeStr = ctime(&currTime);
+	char bufferTime[256];	
+	ctime_s(bufferTime, 256, &currTime);
+	string currTimeStr = bufferTime;
 	currTimeStr.pop_back(); //delete "\n" from string
 	WaitForSingleObject(hMutex, INFINITE);
 	
