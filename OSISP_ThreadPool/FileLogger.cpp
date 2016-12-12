@@ -2,7 +2,7 @@
 #include "FileLogger.h"
 
 string FileLogger::logFileName = "Log.txt";
-HANDLE FileLogger::hMutex = CreateMutex(NULL, FALSE, NULL);
+CriticalSectionManager FileLogger::managerCS;
 
 void FileLogger::Log(string message)
 {
@@ -11,7 +11,8 @@ void FileLogger::Log(string message)
 	ctime_s(bufferTime, 256, &currTime);
 	string currTimeStr = bufferTime;
 	currTimeStr.pop_back(); //delete "\n" from string
-	WaitForSingleObject(hMutex, INFINITE);
+
+	managerCS.Lock();
 	
 	ofstream outputStream(logFileName, ofstream::app);	
 	try
@@ -28,6 +29,11 @@ void FileLogger::Log(string message)
 	}
 	outputStream.close();
 
-	ReleaseMutex(hMutex);
+	managerCS.UnLock();
+}
 
+void FileLogger::ClearFile()
+{
+	ofstream fileStream(logFileName, ofstream::trunc);
+	fileStream.close();
 }

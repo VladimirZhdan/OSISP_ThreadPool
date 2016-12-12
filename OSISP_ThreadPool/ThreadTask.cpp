@@ -9,14 +9,19 @@ ThreadTask::ThreadTask(int(*task)(PVOID params), PVOID params)
 
 int ThreadTask::Run()
 {
+	int result = -1;
 	if (this->task != NULL)
 	{
-		return task(params);
+		try
+		{
+			result = task(params);
+		}
+		catch (...)
+		{
+			FileLogger::Log("Error during performing task");
+		}
 	}
-	else
-	{
-		return -1;
-	}
+	return result;
 }
 
 

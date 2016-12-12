@@ -8,6 +8,7 @@
 #include <iostream>
 #include "ThreadPool.h"
 #include "ThreadTask.h"
+#include "FileLogger.h"
 
 static int ThreadFunc(PVOID params)
 {
@@ -22,6 +23,7 @@ static int ThreadFunc(PVOID params)
 int main()
 {
 	setlocale(LC_ALL, "Russian");
+	FileLogger::ClearFile();
 	ThreadPool *threadPool = new ThreadPool(5);	
 
 	for (int i = 0; i < 5; ++i)
@@ -33,6 +35,8 @@ int main()
 		std::string *message = new std::string(mess);
 		threadPool->EnqueueTask(new ThreadTask(ThreadFunc, (PVOID)(message)));
 	}
+
+	system("pause");
 	threadPool->StopAllThread();
 
 	delete threadPool;

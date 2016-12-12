@@ -2,21 +2,23 @@
 #include "ThreadPool.h"
 
 
-ThreadPool::ThreadPool(int sizePool)
+ThreadPool::ThreadPool(int maxSizePool) : minThreadCount(3)
 {
+	isStoppedThreads = false;	
 	InitializeCriticalSection(&taskVectorCS);
-	InitializeCriticalSection(&threadVectorCS);
-	isStoppedThreads = false;
-	
-	for (int i = 0; i < sizePool; ++i)
-	{
-		AddThread();
-	}
+	InitializeCriticalSection(&threadVectorCS);	
+
+	FileLogger::Log("Created " + std::to_string(minThreadCount) + " threads");
+	for (int i = 0; i < minThreadCount; ++i)
+	{		
+		AddThread();		
+	}	
 }
 
 void ThreadPool::EnqueueTask(ThreadTask * task)
-{
+{	
 	EnterCriticalSection(&taskVectorCS);
+	FileLogger::Log("Added new task");
 	taskVector.push_back(task);
 	LeaveCriticalSection(&taskVectorCS);
 }
@@ -29,7 +31,7 @@ void ThreadPool::StopAllThread()
 	}
 	for (int i = 0; i < (int)threadVector.size(); ++i)
 	{
-		WaitForSingleObject(threadVector[i], INFINITE);
+		WaitForSingleObject(threadVector[i]->threadHandle, INFINITE);
 	}
 	isStoppedThreads = true;
 }
@@ -41,6 +43,8 @@ ThreadPool::~ThreadPool()
 	{
 		StopAllThread();
 	}
+	DeleteCriticalSection(&taskVectorCS);
+	DeleteCriticalSection(&threadVectorCS);
 }
 
 ThreadTask * ThreadPool::DequeueTask()
@@ -50,8 +54,7 @@ ThreadTask * ThreadPool::DequeueTask()
 
 	while (taskVector.size() == 0)
 	{
-		LeaveCriticalSection(&taskVectorCS);
-		Sleep(100);
+		LeaveCriticalSection(&taskVectorCS);		
 		EnterCriticalSection(&taskVectorCS);
 	}	
 	task = taskVector[0];
@@ -61,12 +64,21 @@ ThreadTask * ThreadPool::DequeueTask()
 	return task;
 }
 
+DWORD ThreadPool::ThreadManagerMethod(PVOID params)
+{
+	ThreadPool *thisObj = (ThreadPool*)params;
+	//Ожидание сосдания минимального количества потоков
+
+	return 0;
+}
+
 DWORD WINAPI ThreadPool::WorkThreadMethod(PVOID params)
 {
 	ThreadPool *thisObj = (ThreadPool*)params;
 	ThreadTask *workedTask;
 	while (true)
 	{
+		//Ожидание получения задачи
 		try
 		{
 			workedTask = thisObj->DequeueTask();			
@@ -82,8 +94,10 @@ DWORD WINAPI ThreadPool::WorkThreadMethod(PVOID params)
 		}		
 		catch (...)
 		{
-
+			FileLogger::Log("Thread catch exception: Unknown type exception");
 		}
+		//Сделать текущее состояние потока "Ожидающим"
+		//Послать сообщение manager-у о том, что освободился поток
 	}
 
 	return 0;
@@ -92,11 +106,14 @@ DWORD WINAPI ThreadPool::WorkThreadMethod(PVOID params)
 void ThreadPool::AddThread()
 {
 	EnterCriticalSection(&threadVectorCS);
-	HANDLE thread = CreateThread(NULL, NULL, WorkThreadMethod, this, CREATE_SUSPENDED, NULL);
-	threadVector.push_back(thread);	
+
+	DWORD threadId;
+	HANDLE threadHandle = CreateThread(NULL, NULL, WorkThreadMethod, this, CREATE_SUSPENDED, &threadId);
+	threadVector.push_back(new ThreadInfo(threadHandle, threadId));
+
 	LeaveCriticalSection(&threadVectorCS);
 
-	ResumeThread(thread);	
+	ResumeThread(threadHandle);
 }
 
 

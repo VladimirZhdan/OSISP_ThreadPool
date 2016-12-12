@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Windows.h>
+#include "FileLogger.h"
 
 class ThreadTask
 {
