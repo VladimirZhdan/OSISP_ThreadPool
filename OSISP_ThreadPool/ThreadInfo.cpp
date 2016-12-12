@@ -12,4 +12,5 @@ ThreadInfo::ThreadInfo(HANDLE threadHandle, DWORD threadId)
 
 ThreadInfo::~ThreadInfo()
 {
+	CloseHandle(executeTaskEvent);
 }
