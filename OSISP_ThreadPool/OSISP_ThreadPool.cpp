@@ -11,7 +11,7 @@
 #include "FileLogger.h"
 
 static int ThreadFunc(PVOID params)
-{
+{	
 	std::string *message = reinterpret_cast<std::string *>(params);
 	Sleep(500);
 	std::cout << (*message);
@@ -24,10 +24,14 @@ int main()
 {
 	setlocale(LC_ALL, "Russian");
 	FileLogger::ClearFile();
-	ThreadPool *threadPool = new ThreadPool(5);	
+	ThreadPool *threadPool = new ThreadPool(10);	
 
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 50; ++i)
 	{
+		if ((i % 8) == 0)
+		{
+			Sleep(3000);
+		}
 		std::string mess = "Поток №";	
 		mess.append(std::to_string(i));
 		mess.append("\n");

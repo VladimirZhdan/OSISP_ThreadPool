@@ -4,6 +4,7 @@
 
 ThreadPool::ThreadPool(int maxSizePool) : minThreadCount(4), maxThreadCount(maxSizePool)
 {
+	expandRequiredCount = 0;
 	isStoppedThreads = false;	
 	requireStopManager = false;
 	stopManagerEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -23,7 +24,15 @@ ThreadPool::ThreadPool(int maxSizePool) : minThreadCount(4), maxThreadCount(maxS
 void ThreadPool::EnqueueTask(ThreadTask * task)
 {	
 	EnterCriticalSection(&taskVectorCS);
-	FileLogger::Log("Added new task");
+	if (task != NULL)
+	{
+		FileLogger::Log("Added new task");
+	}
+	else
+	{
+		FileLogger::Log("Added new NULL task");
+	}
+	
 	taskVector.push_back(task);
 	LeaveCriticalSection(&taskVectorCS);
 	
@@ -120,7 +129,15 @@ DWORD ThreadPool::ThreadManagerMethod(PVOID params)
 		ResetEvent(thisObj->requiredManagerEvent);
 		if (!thisObj->requireStopManager)
 		{
-			thisObj->ExpandThreadCount();
+			if (thisObj->expandRequiredCount > 2)
+			{
+				thisObj->expandRequiredCount = 0;
+				thisObj->ExpandThreadCount();
+			}
+			else
+			{
+				thisObj->expandRequiredCount++;
+			}			
 		}		
 	}		
 

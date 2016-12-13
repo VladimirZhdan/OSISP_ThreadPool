@@ -29,6 +29,7 @@ private:
 
 	// Fields
 	
+	int expandRequiredCount;
 	const int minThreadCount;
 	const int maxThreadCount;
 	bool isStoppedThreads;
